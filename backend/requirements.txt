@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+gitpython
+langchain
+transformers
+python-dotenv
