@@ -1,0 +1,43 @@
+classDiagram
+class AELM {
+    -__init__(mutation_rate)
+    +evolve_optimizer(current_accuracy)
+}
+class MRFO {
+    -__init__()
+    +optimize_hyperparams(current_accuracy)
+}
+class HybridGestureRecognizer {
+    -__init__()
+    +init_model(l2_reg, batch_norm)
+    +add_template(gesture_id, landmarks)
+    +geometric_match(landmarks)
+    +train(X, y, epochs, batch_size)
+    +smooth_prediction(prediction)
+    +predict(landmarks)
+    +get_landmarks(frame)
+}
+class GestureTransformer {
+    -__init__(recognizer, stop_streaming, mute_audio)
+    +transform(frame)
+}
+class augment_landmarks {
+    +function(landmarks, num_augmentations)
+}
+class main {
+    +function()
+}
+VideoTransformerBase  numpy : imports
+mini_proj ..> imgaug : imports
+mini_proj ..> streamlit : imports
+mini_proj ..> mediapipe : imports
+mini_proj ..> cv2 : imports
+mini_proj ..> random : imports
+mini_proj ..> os : imports
+mini_proj ..> sklearn : imports
+mini_proj ..> tensorflow : imports
+mini_proj ..> collections : imports
+mini_proj ..> sounddevice : imports
+mini_proj ..> scipy : imports
+mini_proj ..> streamlit_webrtc : imports
+mini_proj ..> time : imports

@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import "./Login.css";
+
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -9,7 +11,7 @@ export default function Login() {
   const handleLogin = (e) => {
     e.preventDefault();
     // dummy check
-    if (username === "admin" && password === "1234") {
+    if (username === "rishitha" && password === "1234") {
       localStorage.setItem("loggedIn", "true");
       navigate("/home");
     } else {
@@ -18,11 +20,23 @@ export default function Login() {
   };
 
   return (
-    <form onSubmit={handleLogin}>
-      <h2>Login</h2>
-      <input type="text" placeholder="Username" onChange={(e) => setUsername(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-      <button type="submit">Login</button>
-    </form>
+    <div className="container">
+      <form onSubmit={handleLogin} className="form">
+        <h2 className="title">Login</h2>
+        <input
+          type="text"
+          placeholder="Username"
+          onChange={(e) => setUsername(e.target.value)}
+          className="input"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)}
+          className="input"
+        />
+        <button type="submit" className="button">Login</button>
+      </form>
+    </div>
   );
 }

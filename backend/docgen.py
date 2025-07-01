@@ -7,14 +7,9 @@ import re
 from urllib.parse import urlparse
 from git import Repo
 from dotenv import load_dotenv
-from multiprocessing import Pool, cpu_count
 
-# LangChain + Ollama
-from langchain_ollama import OllamaLLM
-from langchain.prompts import PromptTemplate
-
-# Load environment variables
 load_dotenv()
+print("🧠 Environment loaded")
 
 def handle_remove_readonly(func, path, exc):
     try:
@@ -23,24 +18,6 @@ def handle_remove_readonly(func, path, exc):
     except PermissionError:
         if path.endswith("index.lock"):
             os.remove(path)
-
-llm = OllamaLLM(model="gemma:2b")
-
-# Optimized prompt template
-prompt_template = PromptTemplate(
-    input_variables=["code"],
-    template="""Summarize the following code:
-
-```
-{code}
-```
-
-Provide:
-1. Purpose
-2. Key functions/classes
-3. Dependencies
-4. Overall functionality"""
-)
 
 def clean_mermaid_text(text):
     if not text:
@@ -180,30 +157,6 @@ def generate_mermaid_class_diagram(metadata):
         for imp in set(info['imports']):
             lines.append(f'{file_base} ..> {imp} : imports')
     return "\n".join(lines)
-# 🚀 Main documentation generation
-def analyze_file(file_path, repo_name):
-    try:
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-            code = f.read()
-
-        if not code.strip():
-            return file_path, None  # Return None for empty files
-
-        if len(code.strip()) < 20:
-            return file_path, "📄 File too short to analyze meaningfully"
-
-        analysis_code = code[:1500] if len(code) > 1500 else code
-
-        prompt = prompt_template.format(code=analysis_code)
-        explanation = llm.invoke(prompt)
-
-        if explanation and len(explanation.strip()) > 10:
-            return file_path, explanation.strip()
-        else:
-            return file_path, "🤖 AI analysis returned empty result"
-
-    except Exception as e:
-        return file_path, f"❌ Error: {str(e)}"
 
 def generate_docs(repo_url):
     repo_name = "D:/temp_repo"
@@ -215,7 +168,11 @@ def generate_docs(repo_url):
 
     # Handle GitHub token if available
     github_token = os.getenv("GITHUB_TOKEN")
-    clone_url = f"https://{github_token}@{urlparse(repo_url).netloc}{urlparse(repo_url).path}" if github_token else repo_url
+    if github_token:
+        parsed = urlparse(repo_url)
+        clone_url = f"https://{github_token}@{parsed.netloc}{parsed.path}"
+    else:
+        clone_url = repo_url
 
     # Clone repository
     try:
@@ -223,54 +180,25 @@ def generate_docs(repo_url):
         Repo.clone_from(clone_url, repo_name)
         print("✅ Repository cloned successfully")
     except Exception as e:
-        return {"status": "error", "message": f"❌ Git clone failed: {str(e)}"}
+        print(f"❌ Git clone failed: {str(e)}")
+        return
 
-    docs = {}
-    important_exts = [".py", ".js", ".ts", ".jsx", ".tsx", ".html", ".json"]
-
-    print("🔍 Scanning files...")
-    files_to_process = []
-
-    for root, dirs, files in os.walk(repo_name):
-        dirs[:] = [d for d in dirs if d not in {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build", ".next", "coverage", ".pytest_cache"}]
-        for file in files:
-            if any(file.endswith(ext) for ext in important_exts):
-                path = os.path.join(root, file)
-                try:
-                    if os.path.getsize(path) <= 50000:
-                        files_to_process.append(path)
-                except:
-                    continue
-
-    print(f"🔄 Processing {len(files_to_process)} files using {cpu_count()} cores...")
-    with Pool(cpu_count()) as pool:
-        results = pool.starmap(analyze_file, [(file, repo_name) for file in files_to_process])
-
-    for index, (file_path, result) in enumerate(results, start=1):
-        if result is None:
-            print(f"Skipping empty file: {file_path}")
-            continue  # Skip empty files
-        rel_path = os.path.relpath(file_path, repo_name)
-        docs[rel_path] = result
-        print(f"{index}/{len(files_to_process)}")
-
-    # Generate Mermaid diagram
-    print("📊 Generating project structure diagram...")
+    print("📊 Generating project structure class diagram...")
     try:
         metadata = extract_metadata(repo_name)
         if metadata:
             mermaid_code = generate_mermaid_class_diagram(metadata)
             cleaned_mermaid = clean_mermaid_text(mermaid_code)
-            docs["__MERMAID__"] = cleaned_mermaid
-            print("✅ Mermaid diagram generated successfully")
             with open("diagram.mmd", "w", encoding="utf-8") as f:
                 f.write(cleaned_mermaid)
-            print("📝 Mermaid diagram saved to diagram.mmd")
+            print("📝 Mermaid class diagram saved to diagram.mmd")
         else:
-            docs["__MERMAID__"] = "graph TD\n    A[No analyzable Python files found]"
+            with open("diagram.mmd", "w", encoding="utf-8") as f:
+                f.write("classDiagram\n    class Empty")
+            print("📝 No Python files found, empty diagram saved.")
+
     except Exception as e:
         print(f"❌ Mermaid generation failed: {e}")
-        docs["__MERMAID__"] = f"graph TD\n    A[Diagram generation failed: {str(e)[:50]}]"
 
     # Cleanup
     try:
@@ -279,20 +207,8 @@ def generate_docs(repo_url):
     except Exception as e:
         print(f"⚠️ Cleanup warning: {e}")
 
-    print(f"✅ Documentation generation completed! Processed {len(files_to_process)} files.")
-    return {"status": "success", "docs": docs, "files_processed": len(files_to_process)}
+    print(f"✅ Documentation generation completed!")
 
-# Ensure the message is printed only once
 if __name__ == "__main__":
-    print("🧠 Ollama + Gemma 2B Enabled")
-    #test_url = "https://github.com/juliotrigo/pycalculator"
-    #result = generate_docs(test_url)
-    #print(result)
-
-
-
-
-
-
-
-
+    test_url = "https://github.com/juliotrigo/pycalculator"
+    generate_docs(test_url)

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mermaid Diagram</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+    }
+    .mermaid {
+      width: 80%;
+      max-width: 800px;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="mermaid">
+    <!-- Mermaid code will be dynamically inserted here -->
+  </div>
+  <script>
+    // Initialize Mermaid
+    mermaid.initialize({ startOnLoad: true });
+
+    // Get Mermaid code from query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const mermaidCode = urlParams.get("code");
+
+    if (mermaidCode) {
+      document.querySelector('.mermaid').innerHTML = mermaidCode;
+      mermaid.init();
+    } else {
+      document.body.innerHTML = "<p>Error: No Mermaid code provided in the URL.</p>";
+    }
+  </script>
+</body>
+</html>
